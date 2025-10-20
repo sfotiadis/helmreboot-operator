@@ -13,6 +13,9 @@ Dockerfile.cross
 # Output of the go coverage tool, specifically when used with LiteIDE
 *.out
 
+# Helm packaged charts
+*.tgz
+
 # Go workspace file
 go.work
 

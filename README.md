@@ -3,6 +3,8 @@
 [![Go Report Card](https://goreportcard.com/badge/github.com/sfotiadis/helmreboot-operator)](https://goreportcard.com/report/github.com/sfotiadis/helmreboot-operator)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 [![GitHub release](https://img.shields.io/github/release/sfotiadis/helmreboot-operator.svg)](https://github.com/sfotiadis/helmreboot-operator/releases)
+[![Docker Pulls](https://img.shields.io/docker/pulls/sfotia2s/helmreboot-operator)](https://hub.docker.com/r/sfotia2s/helmreboot-operator)
+[![Docker Image Size](https://img.shields.io/docker/image-size/sfotia2s/helmreboot-operator)](https://hub.docker.com/r/sfotia2s/helmreboot-operator)
 
 A Kubernetes operator that automatically restarts failed Flux HelmRelease resources when they encounter timeout errors. This operator monitors HelmRelease objects and triggers reconciliation by adding the `fluxcd.io/reconcileAt` annotation when specific failure conditions are detected.
 
@@ -140,6 +142,9 @@ make build
 
 # Build the Docker image
 make docker-build
+
+# Build and push Docker image
+make docker-build-push
 
 # Run tests with coverage
 make test
