@@ -62,7 +62,7 @@ func (r *HelmRebootReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 			strings.Contains(cond.Message, "context deadline exceeded") {
 
 			log.Info("Found timeout condition, adding annotation")
-			// Annotation setzen, um Flux Reconcile zu triggern
+			// Set annotation to trigger Flux reconcile
 			patch := client.MergeFrom(hr.DeepCopy())
 			if hr.Annotations == nil {
 				hr.Annotations = map[string]string{}
