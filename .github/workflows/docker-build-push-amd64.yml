@@ -1,0 +1,71 @@
+name: Build and Push Docker Image (AMD64 only)
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Tag to build and push (AMD64 only)'
+        required: false
+        default: 'latest-amd64'
+
+env:
+  REGISTRY: docker.io
+  IMAGE_NAME: sfotia2s/helmreboot-operator
+  DOCKER_USERNAME: sfotia2s
+
+jobs:
+  build-and-push-amd64:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Extract version from Chart.yaml
+      id: chart-version
+      run: |
+        CHART_VERSION=$(grep '^version:' chart/Chart.yaml | cut -d' ' -f2)
+        APP_VERSION=$(grep '^appVersion:' chart/Chart.yaml | cut -d' ' -f2 | tr -d '"')
+        echo "chart-version=${CHART_VERSION}" >> $GITHUB_OUTPUT
+        echo "app-version=${APP_VERSION}" >> $GITHUB_OUTPUT
+        echo "Chart version: ${CHART_VERSION}"
+        echo "App version: ${APP_VERSION}"
+
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+
+    - name: Log in to Docker Hub
+      uses: docker/login-action@v3
+      with:
+        registry: ${{ env.REGISTRY }}
+        username: ${{ env.DOCKER_USERNAME }}
+        password: ${{ secrets.DOCKER_PASSWORD }}
+
+    - name: Build and push Docker image (AMD64 only)
+      uses: docker/build-push-action@v5
+      with:
+        context: .
+        platforms: linux/amd64
+        push: true
+        tags: |
+          ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.event.inputs.tag }}
+          ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:amd64-latest
+        cache-from: type=gha
+        cache-to: type=gha,mode=max
+        build-args: |
+          GOPROXY=https://proxy.golang.org,direct
+          GOSUMDB=sum.golang.org
+        provenance: false
+
+    - name: Generate summary
+      run: |
+        echo "## Docker Image (AMD64 only)" >> $GITHUB_STEP_SUMMARY
+        echo "**Docker Image:** \`${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.event.inputs.tag }}\`" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "### Pull the image:" >> $GITHUB_STEP_SUMMARY
+        echo "\`\`\`bash" >> $GITHUB_STEP_SUMMARY
+        echo "docker pull ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.event.inputs.tag }}" >> $GITHUB_STEP_SUMMARY
+        echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
