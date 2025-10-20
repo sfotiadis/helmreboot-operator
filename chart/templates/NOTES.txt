@@ -1,0 +1,15 @@
+HelmReboot Operator has been deployed successfully!
+
+The operator will now monitor your Flux HelmRelease resources and automatically
+restart them when they fail due to timeout errors.
+
+To check the operator status:
+  kubectl get pods -n {{ .Release.Namespace }} -l app.kubernetes.io/name={{ include "helmreboot-operator.name" . }}
+
+To view operator logs:
+  kubectl logs -n {{ .Release.Namespace }} -l app.kubernetes.io/name={{ include "helmreboot-operator.name" . }}
+
+To check metrics:
+  kubectl port-forward -n {{ .Release.Namespace }} svc/{{ include "helmreboot-operator.fullname" . }} 8080:8080
+
+For more information, visit: https://github.com/sfotiadis/helmreboot-operator
