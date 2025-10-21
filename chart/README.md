@@ -1,6 +1,6 @@
 # HelmReboot Operator Helm Chart
 
-![Version: 0.1.1](https://img.shields.io/badge/Version-0.1.1-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: 0.1.0](https://img.shields.io/badge/AppVersion-0.1.0-informational?style=flat-square)
+![Version: 0.1.2](https://img.shields.io/badge/Version-0.1.2-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: 0.1.0](https://img.shields.io/badge/AppVersion-0.1.0-informational?style=flat-square)
 
 A Helm chart for deploying the HelmReboot Operator, a Kubernetes operator that automatically restarts failed Flux HelmRelease resources.
 
@@ -19,7 +19,7 @@ The HelmReboot Operator monitors Flux HelmRelease resources for timeout failures
 ### Install from OCI Registry (Recommended)
 
 ```bash
-helm install helmreboot-operator oci://ghcr.io/sfotiadis/helmreboot-operator --version 0.1.1
+helm install helmreboot-operator oci://ghcr.io/sfotiadis/helmreboot-operator
 ```
 
 ### Install from Source

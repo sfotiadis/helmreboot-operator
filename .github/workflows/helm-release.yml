@@ -51,8 +51,8 @@ jobs:
       run: |
         VERSION="${{ steps.version.outputs.version }}"
         sed -i "s/^version:.*/version: ${VERSION}/" chart/Chart.yaml
-        sed -i "s/^appVersion:.*/appVersion: \"${VERSION}\"/" chart/Chart.yaml
         echo "Updated Chart.yaml to version ${VERSION}"
+        echo "Keeping appVersion as defined in Chart.yaml (app version separate from chart version)"
 
     - name: Log in to GitHub Container Registry
       run: |
@@ -62,18 +62,22 @@ jobs:
       run: |
         VERSION="${{ steps.version.outputs.version }}"
         
+        # Get app version from Chart.yaml (keep app version separate from chart version)
+        APP_VERSION=$(grep "^appVersion:" chart/Chart.yaml | cut -d'"' -f2)
+        
         # Package the chart
-        helm package chart/ --version ${VERSION} --app-version ${VERSION}
+        helm package chart/ --version ${VERSION} --app-version ${APP_VERSION}
         
         # Push to GHCR
         helm push helmreboot-operator-${VERSION}.tgz oci://ghcr.io/${{ github.repository_owner }}
         
         echo "Chart pushed: oci://ghcr.io/${{ github.repository_owner }}/helmreboot-operator:${VERSION}"
+        echo "Chart version: ${VERSION}, App version: ${APP_VERSION}"
 
     - name: Generate chart installation instructions
       run: |
         VERSION="${{ steps.version.outputs.version }}"
-        echo "## 📦 Helm Chart Released!" >> $GITHUB_STEP_SUMMARY
+        echo "## Helm Chart Released!" >> $GITHUB_STEP_SUMMARY
         echo "" >> $GITHUB_STEP_SUMMARY
         echo "**Chart Version:** \`${VERSION}\`" >> $GITHUB_STEP_SUMMARY  
         echo "**Registry:** \`oci://ghcr.io/${{ github.repository_owner }}/helmreboot-operator\`" >> $GITHUB_STEP_SUMMARY
