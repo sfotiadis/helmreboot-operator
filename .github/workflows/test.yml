@@ -10,7 +10,6 @@ on:
       - 'test/**'
       - 'go.mod'
       - 'go.sum'
-      - 'Makefile'
       - '.github/workflows/test.yml'
   pull_request:
     paths:
@@ -19,7 +18,6 @@ on:
       - 'test/**'
       - 'go.mod'
       - 'go.sum'
-      - 'Makefile'
   workflow_dispatch:
 
 jobs:

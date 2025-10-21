@@ -1,27 +1,8 @@
 name: E2E Tests
 
 on:
-  push:
-    branches:
-      - main
-    paths:
-      - 'cmd/**'
-      - 'internal/**'
-      - 'test/e2e/**'
-      - 'config/**'
-      - 'go.mod'
-      - 'go.sum'
-      - 'Makefile'
-      - '.github/workflows/test-e2e.yml'
-  pull_request:
-    paths:
-      - 'cmd/**'
-      - 'internal/**'
-      - 'test/e2e/**'
-      - 'config/**'
-      - 'go.mod'
-      - 'go.sum'
-      - 'Makefile'
+  release:
+    types: [published]
   workflow_dispatch:
 
 jobs:

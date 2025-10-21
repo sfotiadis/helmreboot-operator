@@ -1,6 +1,11 @@
 name: Release Helm Chart
 
 on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'chart/Chart.yaml'
   release:
     types: [published]
   workflow_dispatch:
