@@ -1,0 +1,61 @@
+{{- if and .Values.rbac.create .Values.operator.secureMetrics -}}
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: {{ include "helmreboot-operator.fullname" . }}-metrics-reader
+  labels:
+    {{- include "helmreboot-operator.labels" . | nindent 4 }}
+  {{- with .Values.rbac.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+rules:
+- nonResourceURLs:
+  - "/metrics"
+  verbs:
+  - get
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: {{ include "helmreboot-operator.fullname" . }}-metrics-auth
+  labels:
+    {{- include "helmreboot-operator.labels" . | nindent 4 }}
+  {{- with .Values.rbac.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+rules:
+- apiGroups:
+  - authentication.k8s.io
+  resources:
+  - tokenreviews
+  verbs:
+  - create
+- apiGroups:
+  - authorization.k8s.io
+  resources:
+  - subjectaccessreviews
+  verbs:
+  - create
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: {{ include "helmreboot-operator.fullname" . }}-metrics-auth
+  labels:
+    {{- include "helmreboot-operator.labels" . | nindent 4 }}
+  {{- with .Values.rbac.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: {{ include "helmreboot-operator.fullname" . }}-metrics-auth
+subjects:
+- kind: ServiceAccount
+  name: {{ include "helmreboot-operator.serviceAccountName" . }}
+  namespace: {{ .Release.Namespace }}
+{{- end }}

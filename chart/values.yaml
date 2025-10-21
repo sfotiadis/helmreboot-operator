@@ -70,6 +70,8 @@ operator:
   leaderElect: false
   # Reconcile interval for checking HelmReleases
   reconcileInterval: 10m
+  # Enable secure metrics (HTTPS + RBAC). If false, uses HTTP without authentication
+  secureMetrics: false
 
 # This is for setting up a service more information can be found here: https://kubernetes.io/docs/concepts/services-networking/service/
 service:
@@ -97,6 +99,22 @@ monitoring:
     interval: 30s
     # Scrape timeout
     scrapeTimeout: 10s
+  
+  # Grafana Dashboard configuration
+  grafanaDashboard:
+    # Enable Grafana Dashboard ConfigMap creation
+    enabled: false
+    # Namespace where to create the dashboard ConfigMap
+    # If empty, uses the release namespace
+    namespace: ""
+    # Additional labels for the dashboard ConfigMap
+    additionalLabels: {}
+    # Dashboard configuration
+    config:
+      # Grafana folder to place the dashboard in
+      folder: "Kubernetes"
+      # Dashboard datasource (Prometheus datasource name)
+      datasource: "prometheus"
 
 resources:
   # We usually recommend not to specify default resources and to leave this as a conscious

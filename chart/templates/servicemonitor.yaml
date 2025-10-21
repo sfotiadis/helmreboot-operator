@@ -17,4 +17,12 @@ spec:
     interval: {{ .Values.monitoring.serviceMonitor.interval }}
     scrapeTimeout: {{ .Values.monitoring.serviceMonitor.scrapeTimeout }}
     path: /metrics
+    {{- if .Values.operator.secureMetrics }}
+    scheme: https
+    bearerTokenFile: /var/run/secrets/kubernetes.io/serviceaccount/token
+    tlsConfig:
+      insecureSkipVerify: true
+    {{- else }}
+    scheme: http
+    {{- end }}
 {{- end }}

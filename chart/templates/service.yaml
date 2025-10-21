@@ -7,11 +7,13 @@ metadata:
 spec:
   type: {{ .Values.service.type }}
   ports:
-    {{- range .Values.service.ports }}
-    - port: {{ .port }}
-      targetPort: {{ .targetPort }}
-      protocol: {{ .protocol }}
-      name: {{ .name }}
-    {{- end }}
+    - name: metrics
+      port: {{ if .Values.operator.secureMetrics }}8443{{ else }}8080{{ end }}
+      targetPort: {{ if .Values.operator.secureMetrics }}8443{{ else }}8080{{ end }}
+      protocol: TCP
+    - name: health
+      port: 8081
+      targetPort: 8081
+      protocol: TCP
   selector:
     {{- include "helmreboot-operator.selectorLabels" . | nindent 4 }}
