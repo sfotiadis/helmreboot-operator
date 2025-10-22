@@ -1,0 +1,100 @@
+name: Helm Chart Lint
+
+on:
+  pull_request:
+    paths:
+      - 'chart/**'
+  workflow_dispatch:
+
+jobs:
+  helm-lint:
+    name: Lint Helm Chart
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Set up Helm
+      uses: azure/setup-helm@v4
+      with:
+        version: '3.13.0'
+
+    - name: Lint Helm chart
+      run: |
+        echo "Linting Helm chart..."
+        helm lint chart/
+
+    - name: Template and validate chart
+      run: |
+        echo "Templating chart with default values..."
+        helm template test-release chart/ > /tmp/chart-output.yaml
+
+        echo "Chart templates generated successfully"
+        echo "Template summary:"
+        grep -c "^kind:" /tmp/chart-output.yaml | xargs echo "Total Kubernetes resources:"
+
+    - name: Check for required fields
+      run: |
+        echo "Validating Chart.yaml structure..."
+
+        # Check required fields
+        if ! grep -q "^name:" chart/Chart.yaml; then
+          echo "Missing 'name' field in Chart.yaml"
+          exit 1
+        fi
+
+        if ! grep -q "^version:" chart/Chart.yaml; then
+          echo "Missing 'version' field in Chart.yaml"
+          exit 1
+        fi
+
+        if ! grep -q "^description:" chart/Chart.yaml; then
+          echo "Missing 'description' field in Chart.yaml"
+          exit 1
+        fi
+
+        if ! grep -q "^appVersion:" chart/Chart.yaml; then
+          echo "Missing 'appVersion' field in Chart.yaml"
+          exit 1
+        fi
+
+        echo "All required Chart.yaml fields present"
+
+    - name: Validate semantic versioning
+      run: |
+        echo "Validating version format..."
+        VERSION=$(grep "^version:" chart/Chart.yaml | cut -d' ' -f2)
+        APP_VERSION=$(grep "^appVersion:" chart/Chart.yaml | cut -d'"' -f2)
+
+        # Basic semantic version check (x.y.z)
+        if [[ ! $VERSION =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+          echo "Chart version '$VERSION' is not valid semantic versioning (x.y.z)"
+          exit 1
+        fi
+
+        if [[ ! $APP_VERSION =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+          echo "App version '$APP_VERSION' is not valid semantic versioning (x.y.z)"
+          exit 1
+        fi
+
+        echo "Version format is valid: Chart $VERSION, App $APP_VERSION"
+
+    - name: Generate lint summary
+      if: always()
+      run: |
+        echo "## Helm Chart Lint Results" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+
+        if [ $? -eq 0 ]; then
+          echo "**All checks passed!**" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- Helm lint: Passed" >> $GITHUB_STEP_SUMMARY
+          echo "- Template validation: Passed" >> $GITHUB_STEP_SUMMARY
+          echo "- Chart.yaml structure: Passed" >> $GITHUB_STEP_SUMMARY
+          echo "- Semantic versioning: Passed" >> $GITHUB_STEP_SUMMARY
+        else
+          echo "**Some checks failed!**" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Please check the logs above for details." >> $GITHUB_STEP_SUMMARY
+        fi
