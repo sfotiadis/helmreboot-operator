@@ -6,18 +6,9 @@ on:
       - main
     paths:
       - 'chart/Chart.yaml'
-  release:
-    types: [published]
-  workflow_dispatch:
-    inputs:
-      version:
-        description: 'Chart version to release'
-        required: true
-        default: '0.1.0'
 
 env:
   REGISTRY: ghcr.io
-  CHART_NAME: helmreboot-operator
 
 jobs:
   release-chart:
@@ -35,57 +26,31 @@ jobs:
       with:
         version: '3.13.0'
 
-    - name: Extract version from release
-      id: version
+    - name: Get chart info from Chart.yaml
+      id: chart
       run: |
-        if [ "${{ github.event_name }}" = "release" ]; then
-          VERSION="${{ github.event.release.tag_name }}"
-          VERSION="${VERSION#v}"  # Remove 'v' prefix
-        elif [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
-          VERSION="${{ github.event.inputs.version }}"
-        else
-          # Extract version from Chart.yaml for push events
-          VERSION=$(grep "^version:" chart/Chart.yaml | cut -d' ' -f2)
-        fi
+        CHART_NAME=$(grep "^name:" chart/Chart.yaml | cut -d' ' -f2)
+        VERSION=$(grep "^version:" chart/Chart.yaml | cut -d' ' -f2)
+        echo "chart_name=${CHART_NAME}" >> $GITHUB_OUTPUT
         echo "version=${VERSION}" >> $GITHUB_OUTPUT
+        echo "Chart name: ${CHART_NAME}"
         echo "Chart version: ${VERSION}"
 
-    - name: Update Chart.yaml version
-      run: |
-        VERSION="${{ steps.version.outputs.version }}"
-        sed -i "s/^version:.*/version: ${VERSION}/" chart/Chart.yaml
-        echo "Updated Chart.yaml to version ${VERSION}"
-        echo "Keeping appVersion as defined in Chart.yaml (app version separate from chart version)"
-
     - name: Log in to GitHub Container Registry
-      run: |
-        echo "${{ secrets.GITHUB_TOKEN }}" | helm registry login ghcr.io -u ${{ github.actor }} --password-stdin
+      run: echo "${{ secrets.GITHUB_TOKEN }}" | helm registry login ghcr.io -u ${{ github.actor }} --password-stdin
 
     - name: Package and push Helm chart
       run: |
-        VERSION="${{ steps.version.outputs.version }}"
-        
-        # Get app version from Chart.yaml (keep app version separate from chart version)
-        APP_VERSION=$(grep "^appVersion:" chart/Chart.yaml | cut -d'"' -f2)
-        
-        # Package the chart
-        helm package chart/ --version ${VERSION} --app-version ${APP_VERSION}
-        
-        # Push to GHCR
-        helm push helmreboot-operator-${VERSION}.tgz oci://ghcr.io/${{ github.repository_owner }}
-        
-        echo "Chart pushed: oci://ghcr.io/${{ github.repository_owner }}/helmreboot-operator:${VERSION}"
-        echo "Chart version: ${VERSION}, App version: ${APP_VERSION}"
+        CHART_NAME="${{ steps.chart.outputs.chart_name }}"
+        VERSION="${{ steps.chart.outputs.version }}"
+        helm package chart/ --version ${VERSION}
+        helm push ${CHART_NAME}-${VERSION}.tgz oci://ghcr.io/${{ github.repository_owner }}
 
-    - name: Generate chart installation instructions
+    - name: Generate installation summary
       run: |
-        VERSION="${{ steps.version.outputs.version }}"
+        CHART_NAME="${{ steps.chart.outputs.chart_name }}"
+        VERSION="${{ steps.chart.outputs.version }}"
         echo "## Helm Chart Released!" >> $GITHUB_STEP_SUMMARY
-        echo "" >> $GITHUB_STEP_SUMMARY
-        echo "**Chart Version:** \`${VERSION}\`" >> $GITHUB_STEP_SUMMARY  
-        echo "**Registry:** \`oci://ghcr.io/${{ github.repository_owner }}/helmreboot-operator\`" >> $GITHUB_STEP_SUMMARY
-        echo "" >> $GITHUB_STEP_SUMMARY
-        echo "### Install the chart:" >> $GITHUB_STEP_SUMMARY
-        echo "\`\`\`bash" >> $GITHUB_STEP_SUMMARY
-        echo "helm install helmreboot-operator oci://ghcr.io/${{ github.repository_owner }}/helmreboot-operator --version ${VERSION}" >> $GITHUB_STEP_SUMMARY
-        echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+        echo "**Chart:** \`${CHART_NAME}\`" >> $GITHUB_STEP_SUMMARY
+        echo "**Version:** \`${VERSION}\`" >> $GITHUB_STEP_SUMMARY
+        echo "**Install:** \`helm install ${CHART_NAME} oci://ghcr.io/${{ github.repository_owner }}/${CHART_NAME} --version ${VERSION}\`" >> $GITHUB_STEP_SUMMARY
